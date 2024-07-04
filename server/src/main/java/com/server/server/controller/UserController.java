@@ -2,6 +2,7 @@ package com.server.server.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,9 @@ public class UserController {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserModel post) {
         try {
@@ -34,7 +38,7 @@ public class UserController {
             UserModel user = new UserModel();
             user.setName(post.getName());
             user.setEmail(post.getEmail());
-            user.setPassword(post.getPassword());
+            user.setPassword(bCryptPasswordEncoder.encode(post.getPassword()));
             user.setPhone(post.getPhone());
             userRepository.save(user);
             return ResponseEntity.ok("User registered successfully");
@@ -51,7 +55,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body("Email doesn't exist");
             }
             UserModel data = userRepository.findByEmail(post.getEmail());
-            if (!data.getPassword().equals(post.getPassword())) {
+            if (!bCryptPasswordEncoder.matches(post.getPassword(), data.getPassword())) {
                 return ResponseEntity.badRequest().body("Invalid Password");
             }
             return ResponseEntity.ok("Login Successfully");
@@ -65,12 +69,11 @@ public class UserController {
     @PutMapping("/update-password")
     public ResponseEntity<?> updatePassword(@RequestBody UserModel post, @RequestParam String Id) {
         try {
-            if(!userRepository.existsByEmail(post.getEmail()))
-            {
+            if (!userRepository.existsByEmail(post.getEmail())) {
                 return ResponseEntity.badRequest().body("User Don't Exist");
             }
             UserModel user = userRepository.findByEmail(post.getEmail());
-            user.setPassword(post.getPassword());
+            user.setPassword(bCryptPasswordEncoder.encode(post.getPassword()));
             userRepository.save(user);
             return ResponseEntity.badRequest().body("Password Changed Successfully");
         } catch (Exception e) {
