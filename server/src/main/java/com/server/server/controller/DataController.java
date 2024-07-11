@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.server.server.dbinheritence.DataRepository;
 import com.server.server.model.DataModel;
+import com.server.server.services.EmailServices;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -29,6 +30,10 @@ public class DataController {
     DataRepository dataRepository;
     // creating a new dataset for the storing data
 
+    // mail class getting
+    @Autowired
+    private EmailServices emailServices;
+
     @PostMapping("/new-data")
     public ResponseEntity<?> newData(@RequestBody DataModel post) {
         try {
@@ -38,6 +43,8 @@ public class DataController {
             data.setAppPassword(post.getAppPassword());
             data.setLastUpdate(new Date());
             dataRepository.save(data);
+            emailServices.sendMail(post.getEmail(), "New App Added",
+                    "This is a confirmation message for the Adding a new Email in the website PASSWORDMANAGER");
             return ResponseEntity.ok("Saved Successfully");
         } catch (Exception e) {
             System.out.println("Error" + e);
